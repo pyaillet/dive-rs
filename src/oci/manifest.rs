@@ -54,7 +54,7 @@ pub struct Manifest {
 }
 
 pub fn parse_manifest(content: &str) -> Result<Manifest, Box<dyn error::Error>> {
-    let m: Manifest = serde_json::from_str(content)?;
+    let m = serde_json::from_str(content)?;
     Ok(m)
 }
 
@@ -85,13 +85,8 @@ fn test_parse_manifest_ok() {
               "annot2": "value2"
             }
         }"#;
+
     let m = parse_manifest(c);
 
-    if m.is_err() {
-        println!("Error {:?}", m.err());
-        assert!(false);
-    } else {
-        assert!(m.is_ok());
-        println!("Result: {:?}", m.unwrap());
-    }
+    assert!(m.is_ok(), "Manifest parsing failed: `{}`", m.err().unwrap());
 }

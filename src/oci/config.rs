@@ -131,13 +131,8 @@ fn test_parse_config_ok() {
               }
             ]
         }"#;
+
     let m = parse_config(c);
 
-    if m.is_err() {
-        println!("Error {:?}", m.err());
-        assert!(false);
-    } else {
-        assert!(m.is_ok());
-        println!("Result: {:?}", m.unwrap());
-    }
+    assert!(m.is_ok(), "Config parsing failed: `{}`", m.err().unwrap());
 }
