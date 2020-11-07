@@ -54,7 +54,7 @@ pub struct Manifest {
 }
 
 pub fn parse_manifest(content: &str) -> Result<Manifest, Box<dyn error::Error>> {
-    let m: Manifest = serde_json::from_str(content)?;
+    let m = serde_json::from_str(content)?;
     Ok(m)
 }
 
