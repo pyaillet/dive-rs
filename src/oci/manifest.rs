@@ -85,13 +85,8 @@ fn test_parse_manifest_ok() {
               "annot2": "value2"
             }
         }"#;
+
     let m = parse_manifest(c);
 
-    if m.is_err() {
-        println!("Error {:?}", m.err());
-        assert!(false);
-    } else {
-        assert!(m.is_ok());
-        println!("Result: {:?}", m.unwrap());
-    }
+    assert!(m.is_ok(), "Manifest parsing failed: `{}`", m.err().unwrap());
 }
