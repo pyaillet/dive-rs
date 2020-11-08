@@ -1,32 +1,40 @@
-use crate::oci::image::manifest::Manifest;
+use crate::oci::image::manifest::ManifestV1;
 use crate::oci::image::ImageReference;
 use crate::oci::image::Reference;
 use std::error;
 
 fn manifest_url(path: String) -> String {
     let im = ImageReference(path);
-    let r = im.registry();
-    let f = im.fullname();
-    let t = im.tag();
-    format!("https://{}/v2/{}/manifest/{}", r, f, t)
+    format!(
+        "https://{}/v2/{}/manifests/{}",
+        im.registry(),
+        im.name(),
+        im.tag()
+    )
 }
 
-pub fn get_manifest(path: &str) -> Result<Manifest, Box<dyn error::Error>> {
+pub fn get_manifest(path: &str) -> Result<ManifestV1, Box<dyn error::Error>> {
     let url = &manifest_url(path.to_string());
     println!("{:?}", url);
     let res = reqwest::blocking::get(url)?;
-    let m: Manifest = serde_json::from_str(&res.text()?)?;
+    let m: ManifestV1 = serde_json::from_str(&res.text()?)?;
     Ok(m)
 }
 
-#[test]
-fn get_manifest_ok() {
-    let r = get_manifest("localhost:5000/test:local");
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    if r.is_err() {
-        println!("Error: {:?}", r.err());
-    } else {
-        assert!(r.is_ok());
-        println!("Resulst: {:?}", r.ok());
+    use crate::oci::image::manifest;
+
+    #[test]
+    fn get_manifest_ok() -> Result<(), Box<dyn error::Error>> {
+        let r: ManifestV1 = get_manifest("localhost:5000/test:local")?;
+        assert_eq!(r.tag, "local");
+        assert_eq!(r.name, "test");
+        assert_eq!(r.schema_version, 1);
+        assert_eq!(r.architecture, manifest::Architecture::Amd64);
+
+        Ok(())
     }
 }

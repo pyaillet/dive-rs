@@ -7,6 +7,8 @@ pub trait Reference {
 
     fn fullname(&self) -> String;
 
+    fn name(&self) -> String;
+
     fn tag(&self) -> String;
 
     fn digest(&self) -> String;
@@ -27,6 +29,14 @@ impl Reference for ImageReference {
         match self.0.find("/") {
             Some(x) => self.0[x + 1..].to_string(),
             None => self.0.to_string(),
+        }
+    }
+
+    fn name(&self) -> String {
+        let fullname = self.fullname();
+        match fullname.find(":") {
+            Some(x) => fullname[..x].to_string(),
+            None => fullname.to_string(),
         }
     }
 
@@ -59,6 +69,18 @@ mod tests {
         assert_eq!(
             ImageReference("localhost:5000/test/test".to_string()).tag(),
             "latest".to_string()
+        );
+    }
+
+    #[test]
+    fn name_ok() {
+        assert_eq!(
+            ImageReference("localhost:5000/test/test:v1".to_string()).name(),
+            "test/test".to_string()
+        );
+        assert_eq!(
+            ImageReference("localhost:5000/test/test".to_string()).name(),
+            "test/test".to_string()
         );
     }
 
