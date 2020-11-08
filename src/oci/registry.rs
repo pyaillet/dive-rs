@@ -3,12 +3,8 @@ use std::error;
 
 pub fn get_manifest(path: String) -> Result<Manifest, Box<dyn error::Error>> {
     let res = ureq::get("http://httpbin.org/get").call().into_string()?;
-    let m: Result<Manifest, serde_json::Error> = serde_json::from_str(&res);
-
-    match m {
-        Ok(m) => Ok(m),
-        Err(e) => Err(Box::new(e)),
-    }
+    let m: Manifest = serde_json::from_str(&res)?;
+    Ok(m)
 }
 
 #[test]
