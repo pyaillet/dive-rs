@@ -1,7 +1,4 @@
-use std::error;
-
 use serde::{Deserialize, Serialize};
-use serde_json;
 use serde_json::value::Value;
 use std::collections::HashMap;
 
@@ -71,11 +68,6 @@ pub struct Config {
     history: Vec<History>,
 }
 
-pub fn from_str(content: &str) -> Result<Config, Box<dyn error::Error>> {
-    let c = serde_json::from_str(content)?;
-    Ok(c)
-}
-
 #[test]
 fn test_from_str_ok() {
     let c = r#"
@@ -132,7 +124,7 @@ fn test_from_str_ok() {
             ]
         }"#;
 
-    let m = from_str(c);
+    let m: Result<Config, serde_json::Error> = serde_json::from_str(c);
 
     assert!(m.is_ok(), "Config parsing failed: `{}`", m.err().unwrap());
 }

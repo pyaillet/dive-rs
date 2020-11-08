@@ -29,10 +29,8 @@
 //}
 
 use std::collections::HashMap;
-use std::error;
 
 use serde::{Deserialize, Serialize};
-use serde_json;
 
 use crate::oci::Hash;
 
@@ -51,11 +49,6 @@ pub struct Manifest {
     config: Media,
     layers: Vec<Media>,
     annotations: HashMap<String, String>,
-}
-
-pub fn from_str(content: &str) -> Result<Manifest, Box<dyn error::Error>> {
-    let m = serde_json::from_str(content)?;
-    Ok(m)
 }
 
 #[test]
@@ -86,7 +79,7 @@ fn test_from_str_ok() {
             }
         }"#;
 
-    let m = from_str(c);
+    let m: Result<Manifest, serde_json::Error> = serde_json::from_str(c);
 
     assert!(m.is_ok(), "Manifest parsing failed: `{}`", m.err().unwrap());
 }
