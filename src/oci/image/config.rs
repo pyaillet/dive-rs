@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::value::Value;
 use std::collections::HashMap;
+use std::error;
 
 use crate::oci::Hash;
 
@@ -69,7 +70,7 @@ pub struct Config {
 }
 
 #[test]
-fn test_from_str_ok() {
+fn test_from_str_ok() -> Result<(), Box<dyn error::Error>> {
     let c = r#"
         {
             "created": "2015-10-31T22:22:56.015925234Z",
@@ -124,7 +125,9 @@ fn test_from_str_ok() {
             ]
         }"#;
 
-    let m: Result<Config, serde_json::Error> = serde_json::from_str(c);
-
-    assert!(m.is_ok(), "Config parsing failed: `{}`", m.err().unwrap());
+    let c: Config = serde_json::from_str(c)?;
+    assert_eq!(c.config.user, "alice");
+    assert_eq!(c.config.working_dir, "/home/alice");
+    assert_eq!(c.config.entrypoint[0], "/bin/my-app-binary");
+    Ok(())
 }
