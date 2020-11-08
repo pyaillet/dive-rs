@@ -53,13 +53,13 @@ pub struct Manifest {
     annotations: HashMap<String, String>,
 }
 
-pub fn parse_manifest(content: &str) -> Result<Manifest, Box<dyn error::Error>> {
+pub fn from_str(content: &str) -> Result<Manifest, Box<dyn error::Error>> {
     let m = serde_json::from_str(content)?;
     Ok(m)
 }
 
 #[test]
-fn test_parse_manifest_ok() {
+fn test_from_str_ok() {
     let c = r#"
         {
             "schemaVersion": 2,
@@ -86,7 +86,7 @@ fn test_parse_manifest_ok() {
             }
         }"#;
 
-    let m = parse_manifest(c);
+    let m = from_str(c);
 
     assert!(m.is_ok(), "Manifest parsing failed: `{}`", m.err().unwrap());
 }

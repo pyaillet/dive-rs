@@ -71,13 +71,13 @@ pub struct Config {
     history: Vec<History>,
 }
 
-pub fn parse_config(content: &str) -> Result<Config, Box<dyn error::Error>> {
+pub fn from_str(content: &str) -> Result<Config, Box<dyn error::Error>> {
     let c = serde_json::from_str(content)?;
     Ok(c)
 }
 
 #[test]
-fn test_parse_config_ok() {
+fn test_from_str_ok() {
     let c = r#"
         {
             "created": "2015-10-31T22:22:56.015925234Z",
@@ -132,7 +132,7 @@ fn test_parse_config_ok() {
             ]
         }"#;
 
-    let m = parse_config(c);
+    let m = from_str(c);
 
     assert!(m.is_ok(), "Config parsing failed: `{}`", m.err().unwrap());
 }

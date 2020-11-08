@@ -1,7 +1,5 @@
-mod config;
-mod layer;
-mod manifest;
-mod registry;
+pub mod image;
+pub mod registry;
 
 use serde::{Deserialize, Serialize};
 
