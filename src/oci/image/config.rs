@@ -1,20 +1,17 @@
-use std::error;
-
 use serde::{Deserialize, Serialize};
-use serde_json;
 use serde_json::value::Value;
 use std::collections::HashMap;
 
 use crate::oci::Hash;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum OS {
     Linux,
     Windows,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum Architecture {
     Amd64,
@@ -30,21 +27,21 @@ pub enum RootFSType {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct Configuration {
-    user: String,
-    exposed_ports: HashMap<String, Value>,
-    env: Vec<String>,
-    entrypoint: Vec<String>,
-    cmd: Vec<String>,
-    volumes: HashMap<String, Value>,
-    working_dir: String,
-    labels: HashMap<String, String>,
+    pub user: String,
+    pub exposed_ports: HashMap<String, Value>,
+    pub env: Vec<String>,
+    pub entrypoint: Vec<String>,
+    pub cmd: Vec<String>,
+    pub volumes: HashMap<String, Value>,
+    pub working_dir: String,
+    pub labels: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RootFS {
-    diff_ids: Vec<Hash>,
+    pub diff_ids: Vec<Hash>,
     #[serde(alias = "type")]
-    rootfs_type: RootFSType,
+    pub rootfs_type: RootFSType,
 }
 
 fn default_as_false() -> bool {
@@ -53,32 +50,33 @@ fn default_as_false() -> bool {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct History {
-    created: String,
-    created_by: String,
+    pub created: String,
+    pub created_by: String,
     #[serde(default = "default_as_false")]
-    empty_layer: bool,
+    pub empty_layer: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-    created: String,
-    author: String,
-    architecture: Architecture,
-    os: OS,
-    config: Configuration,
-    rootfs: RootFS,
-    history: Vec<History>,
+    pub created: String,
+    pub author: String,
+    pub architecture: Architecture,
+    pub os: OS,
+    pub config: Configuration,
+    pub rootfs: RootFS,
+    pub history: Vec<History>,
 }
 
-pub fn parse_config(content: &str) -> Result<Config, Box<dyn error::Error>> {
-    let c = serde_json::from_str(content)?;
-    Ok(c)
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn test_parse_config_ok() {
-    let c = r#"
+    use std::error;
+
+    #[test]
+    fn test_from_str_ok() -> Result<(), Box<dyn error::Error>> {
+        let c = r#"
         {
             "created": "2015-10-31T22:22:56.015925234Z",
             "author": "Alyssa P. Hacker <alyspdev@example.com>",
@@ -132,7 +130,10 @@ fn test_parse_config_ok() {
             ]
         }"#;
 
-    let m = parse_config(c);
-
-    assert!(m.is_ok(), "Config parsing failed: `{}`", m.err().unwrap());
+        let c: Config = serde_json::from_str(c)?;
+        assert_eq!(c.config.user, "alice");
+        assert_eq!(c.config.working_dir, "/home/alice");
+        assert_eq!(c.config.entrypoint[0], "/bin/my-app-binary");
+        Ok(())
+    }
 }
