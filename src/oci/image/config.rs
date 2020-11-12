@@ -27,14 +27,14 @@ pub enum RootFSType {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct Configuration {
-    pub user: String,
-    pub exposed_ports: HashMap<String, Value>,
-    pub env: Vec<String>,
-    pub entrypoint: Vec<String>,
-    pub cmd: Vec<String>,
-    pub volumes: HashMap<String, Value>,
-    pub working_dir: String,
-    pub labels: HashMap<String, String>,
+    pub user: Option<String>,
+    pub exposed_ports: Option<HashMap<String, Value>>,
+    pub env: Option<Vec<String>>,
+    pub entrypoint: Option<Vec<String>>,
+    pub cmd: Option<Vec<String>>,
+    pub volumes: Option<HashMap<String, Value>>,
+    pub working_dir: Option<String>,
+    pub labels: Option<HashMap<String, String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -60,7 +60,7 @@ pub struct History {
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub created: String,
-    pub author: String,
+    pub author: Option<String>,
     pub architecture: Architecture,
     pub os: OS,
     pub config: Configuration,
@@ -131,9 +131,12 @@ mod tests {
         }"#;
 
         let c: Config = serde_json::from_str(c)?;
-        assert_eq!(c.config.user, "alice");
-        assert_eq!(c.config.working_dir, "/home/alice");
-        assert_eq!(c.config.entrypoint[0], "/bin/my-app-binary");
+        assert_eq!(c.config.user, Some("alice".to_string()));
+        assert_eq!(c.config.working_dir, Some("/home/alice".to_string()));
+        assert_eq!(
+            c.config.entrypoint,
+            Some(vec!["/bin/my-app-binary".to_string()])
+        );
         Ok(())
     }
 }
