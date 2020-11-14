@@ -28,11 +28,15 @@
 //  }
 //}
 
-use std::collections::HashMap;
+use std::collections::HashMap as Map;
 
 use serde::{Deserialize, Serialize};
 
 use crate::oci::Hash;
+
+pub const MANIFEST_MIME: &str = "application/vnd.docker.distribution.manifest.v2+json";
+pub const CONFIG_MIME: &str = "application/vnd.docker.container.image.v1+json";
+pub const LAYER_MIME: &str = "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -50,25 +54,8 @@ pub enum Architecture {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct History {
-    pub v1_compatibility: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
 pub struct Layer {
     pub blob_sum: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct ManifestV1 {
-    pub schema_version: u8,
-    pub name: String,
-    pub tag: String,
-    pub architecture: Architecture,
-    pub fs_layers: Vec<Layer>,
-    pub history: Vec<History>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,11 +68,11 @@ pub struct Media {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct ManifestV2 {
+pub struct Manifest {
     pub schema_version: u8,
     pub config: Media,
     pub layers: Vec<Media>,
-    pub annotations: HashMap<String, String>,
+    pub annotations: Option<Map<String, String>>,
 }
 
 #[cfg(test)]
@@ -121,7 +108,7 @@ mod tests {
             }
         }"#;
 
-        let m: Result<ManifestV2, serde_json::Error> = serde_json::from_str(c);
+        let m: Result<Manifest, serde_json::Error> = serde_json::from_str(c);
 
         assert!(m.is_ok(), "Manifest parsing failed: `{}`", m.err().unwrap());
     }
