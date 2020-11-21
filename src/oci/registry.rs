@@ -1,11 +1,9 @@
-use crate::oci::image::config;
 use crate::oci::image::config::Config;
 use crate::oci::image::manifest;
 use crate::oci::image::manifest::Manifest;
 use crate::oci::image::ImageReference;
 use crate::oci::image::Reference;
 use std::error;
-use std::str::FromStr;
 
 fn manifest_url(im: ImageReference) -> String {
     format!(
@@ -55,8 +53,12 @@ pub fn get_config(im: ImageReference) -> Result<Config, Box<dyn error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use httpmock::Method::GET;
     use httpmock::MockServer;
+
+    use crate::oci::image::config;
+    use std::str::FromStr;
 
     #[test]
     fn get_manifest_ok() -> Result<(), Box<dyn error::Error>> {
@@ -104,6 +106,11 @@ mod tests {
         assert_eq!(r.os, config::OS::Linux);
         assert_eq!(r.architecture, config::Architecture::Amd64);
 
+        Ok(())
+    }
+
+    #[test]
+    fn get_layer_ok() -> Result<(), Box<dyn error::Error>> {
         Ok(())
     }
 }
