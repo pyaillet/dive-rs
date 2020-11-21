@@ -10,3 +10,5 @@ edition = "2018"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 reqwest = { version = "0.10.8", features = ["blocking"] }
+httpmock = "0.5.2"
+url = "2.2.0"
