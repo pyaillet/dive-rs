@@ -100,13 +100,14 @@ mod tests {
     #[test]
     fn hostport_ok() {
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test:v1")
+            "registry.my:5000/test/test:v1"
+                .parse::<ImageReference>()
                 .unwrap()
                 .hostport(),
             "registry.my:5000".to_string()
         );
         assert_eq!(
-            ImageReference::from_str("test/test").unwrap().hostport(),
+            "test/test".parse::<ImageReference>().unwrap().hostport(),
             "docker.io:443".to_string()
         );
     }
@@ -114,13 +115,15 @@ mod tests {
     #[test]
     fn tag_ok() {
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test:v1")
+            "registry.my:5000/test/test:v1"
+                .parse::<ImageReference>()
                 .unwrap()
                 .tag(),
             "v1".to_string()
         );
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test")
+            "registry.my:5000/test/test"
+                .parse::<ImageReference>()
                 .unwrap()
                 .tag(),
             "latest".to_string()
@@ -130,13 +133,15 @@ mod tests {
     #[test]
     fn name_ok() {
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test:v1")
+            "registry.my:5000/test/test:v1"
+                .parse::<ImageReference>()
                 .unwrap()
                 .name(),
             "test/test".to_string()
         );
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test")
+            "registry.my:5000/test/test"
+                .parse::<ImageReference>()
                 .unwrap()
                 .name(),
             "test/test".to_string()
@@ -146,13 +151,15 @@ mod tests {
     #[test]
     fn fullname_ok() {
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test:v1")
+            "registry.my:5000/test/test:v1"
+                .parse::<ImageReference>()
                 .unwrap()
                 .fullname(),
             "test/test:v1".to_string()
         );
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test")
+            "registry.my:5000/test/test"
+                .parse::<ImageReference>()
                 .unwrap()
                 .fullname(),
             "test/test".to_string()
@@ -162,19 +169,21 @@ mod tests {
     #[test]
     fn scheme_ok() {
         assert_eq!(
-            ImageReference::from_str("registry.my:5000/test/test:v1")
+            "registry.my:5000/test/test:v1"
+                .parse::<ImageReference>()
                 .unwrap()
                 .scheme(),
             "https".to_string()
         );
         assert_eq!(
-            ImageReference::from_str("http://registry.my:5000/test/test:v1")
+            "http://registry.my:5000/test/test:v1"
+                .parse::<ImageReference>()
                 .unwrap()
                 .scheme(),
             "http".to_string()
         );
         assert_eq!(
-            ImageReference::from_str("test/test:v1").unwrap().scheme(),
+            "test/test:v1".parse::<ImageReference>().unwrap().scheme(),
             "https".to_string()
         );
     }

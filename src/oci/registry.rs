@@ -58,7 +58,6 @@ mod tests {
     use httpmock::MockServer;
 
     use crate::oci::image::config;
-    use std::str::FromStr;
 
     #[test]
     fn get_manifest_ok() -> Result<(), Box<dyn error::Error>> {
@@ -70,7 +69,7 @@ mod tests {
         });
         let image_url = format!("http://{}:{}/test:local", server.host(), server.port());
 
-        let image_ref = ImageReference::from_str(&image_url)?;
+        let image_ref: ImageReference = image_url.parse()?;
 
         let r: Manifest = get_manifest(image_ref)?;
 
@@ -97,7 +96,7 @@ mod tests {
 
         let image_url = format!("http://{}:{}/test:local", server.host(), server.port());
 
-        let image_ref = ImageReference::from_str(&image_url)?;
+        let image_ref: ImageReference = image_url.parse()?;
 
         let r: Config = get_config(image_ref)?;
 
