@@ -22,7 +22,7 @@ enum NodeSpec {
 }
 
 impl fmt::Debug for NodeSpec {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             NodeSpec::File(_) => f.debug_struct("File").finish(),
             NodeSpec::Dir(_) => f.debug_struct("Dir").finish(),
