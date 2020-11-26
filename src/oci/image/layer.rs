@@ -3,44 +3,43 @@ use std::fmt;
 pub struct Layer {}
 
 #[derive(Debug)]
-struct File {
-    pub name: String,
-    pub full_path: String,
-}
+struct File {}
 
 struct Dir {
-    pub name: String,
-    pub full_path: String,
     pub nodes: Vec<Node>,
-}
-
-impl fmt::Display for Dir {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.name, self.full_path)
-    }
-}
-
-impl fmt::Debug for Dir {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "name => {}\nfull_path => {}\n",
-            self.name, self.full_path
-        )
-    }
 }
 
 #[derive(Debug)]
 struct Symlink {
-    pub name: String,
-    pub full_path: String,
     pub target: String,
 }
 
-enum Node {
+enum NodeSpec {
     File(File),
     Dir(Dir),
     Symlink(Symlink),
+    Unimplemented(()),
+}
+
+impl fmt::Debug for NodeSpec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            NodeSpec::File(_) => f.debug_struct("File").finish(),
+            NodeSpec::Dir(_) => f.debug_struct("Dir").finish(),
+            NodeSpec::Symlink(s) => f
+                .debug_struct("Symlink")
+                .field("target", &s.target)
+                .finish(),
+            NodeSpec::Unimplemented(_) => f.debug_struct("UNIMPLEMENTED").finish(),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct Node {
+    pub name: String,
+    pub full_path: String,
+    pub node_type: NodeSpec,
 }
 
 #[cfg(test)]
@@ -64,48 +63,32 @@ mod tests {
             .map(|entry| -> Result<Node, Box<dyn error::Error>> {
                 let header = entry.header();
                 let path = entry.path()?.to_owned();
-                let name = match path.file_name() {
-                    Some(n) => n.to_string_lossy().to_string(),
-                    None => "Not found".to_string(),
-                };
-                let full_path = path.to_str().unwrap().to_string();
-                match header.entry_type() {
-                    EntryType::Regular => Ok(Node::File(File {
-                        name: name,
-                        full_path: full_path,
-                    })),
-                    EntryType::Directory => Ok(Node::Dir(Dir {
-                        name: name,
-                        full_path: full_path,
-                        nodes: Vec::new(),
-                    })),
-                    EntryType::Symlink => Ok(Node::Symlink(Symlink {
-                        name: name,
-                        full_path: full_path,
-                        target: header
-                            .link_name()?
-                            .unwrap()
-                            .to_owned()
-                            .to_str()
-                            .unwrap()
-                            .to_string(),
-                    })),
-                    _ => Err("Not found".into()),
-                }
+                Ok(Node {
+                    name: match path.file_name() {
+                        Some(n) => n.to_string_lossy().to_string(),
+                        None => "Not found".to_string(),
+                    },
+                    full_path: path.to_str().unwrap().to_string(),
+                    node_type: match header.entry_type() {
+                        EntryType::Regular => NodeSpec::File(File {}),
+                        EntryType::Directory => NodeSpec::Dir(Dir { nodes: Vec::new() }),
+                        EntryType::Symlink => NodeSpec::Symlink(Symlink {
+                            target: header
+                                .link_name()?
+                                .unwrap()
+                                .to_owned()
+                                .to_str()
+                                .unwrap()
+                                .to_string(),
+                        }),
+                        _ => NodeSpec::Unimplemented(()),
+                    },
+                })
             })
-            .for_each(|r| match r {
-                Ok(n) => match n {
-                    Node::Symlink(s) => {
-                        dbg!(s);
-                    }
-                    Node::Dir(d) => {
-                        dbg!(d);
-                    }
-                    Node::File(f) => {
-                        dbg!(f);
-                    }
-                },
-                Err(e) => print!("Error: {:?}", e),
+            .for_each(|r| {
+                if let Ok(e) = r {
+                    dbg!(e);
+                }
             });
         Ok(())
     }
