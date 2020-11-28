@@ -1,20 +1,24 @@
+use std::error;
 use std::fmt;
 
-pub struct Layer {}
+use flate2::read::GzDecoder;
+use std::fs;
+use tar::Archive;
+use tar::EntryType;
 
 #[derive(Debug)]
-struct File {}
+pub struct File {}
 
-struct Dir {
+pub struct Dir {
     pub nodes: Vec<Node>,
 }
 
 #[derive(Debug)]
-struct Symlink {
+pub struct Symlink {
     pub target: String,
 }
 
-enum NodeSpec {
+pub enum NodeSpec {
     File(File),
     Dir(Dir),
     Symlink(Symlink),
@@ -36,29 +40,32 @@ impl fmt::Debug for NodeSpec {
 }
 
 #[derive(Debug)]
-struct Node {
+pub struct Node {
     pub name: String,
     pub full_path: String,
     pub node_type: NodeSpec,
 }
+pub struct Layer {
+    pub file_tree: Node,
+}
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl Layer {
+    pub fn new() -> Layer {
+        Layer {
+            file_tree: Node {
+                name: "/".to_string(),
+                full_path: "/".to_string(),
+                node_type: NodeSpec::Dir(Dir { nodes: Vec::new() }),
+            },
+        }
+    }
 
-    use flate2::read::GzDecoder;
-    use std::error;
-    use std::fs;
-    use tar::Archive;
-    use tar::EntryType;
-
-    #[test]
-    fn test_targz() -> Result<(), Box<dyn error::Error>> {
-        let tar_gz = fs::File::open("tests/resources/tests_local_layer_tar_gzip")?;
+    pub fn from_tar_gz(archive_file: &str) -> Layer {
+        let tar_gz = fs::File::open(archive_file).expect("Unable to open file");
         let mut archive = Archive::new(GzDecoder::new(tar_gz));
-        println!("Extracted the following files:");
-        archive
-            .entries()?
+        let nodes = archive
+            .entries()
+            .expect("No entries found")
             .filter_map(|e| e.ok())
             .map(|entry| -> Result<Node, Box<dyn error::Error>> {
                 let header = entry.header();
@@ -85,11 +92,32 @@ mod tests {
                     },
                 })
             })
-            .for_each(|r| {
-                if let Ok(e) = r {
-                    dbg!(e);
-                }
-            });
+            .filter_map(|r| r.ok())
+            .collect::<Vec<Node>>();
+        Layer {
+            file_tree: Node {
+                name: "/".to_string(),
+                full_path: "/".to_string(),
+                node_type: NodeSpec::Dir(Dir { nodes }),
+            },
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_from_tar_gz() -> Result<(), Box<dyn error::Error>> {
+        let layer = Layer::from_tar_gz("tests/resources/tests_local_layer_tar_gzip");
+        if let NodeSpec::Dir(root) = layer.file_tree.node_type {
+            let node_count = root.nodes.len();
+            for n in root.nodes {
+                dbg!(n);
+            }
+            assert_eq!(node_count, 495);
+        }
         Ok(())
     }
 }
