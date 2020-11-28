@@ -26,9 +26,7 @@ impl FromStr for ImageReference {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let sanatized = if s.starts_with("http://") {
-            s.to_string()
-        } else if s.starts_with("https://") {
+        let sanatized = if s.starts_with("http://") || s.starts_with("https://") {
             s.to_string()
         } else {
             let host_prepended = match s.find('/') {
@@ -55,7 +53,7 @@ impl Reference for ImageReference {
             Some(x) => x,
             None => 443,
         };
-        format!("{}:{}", host, port).to_string()
+        format!("{}:{}", host, port)
     }
 
     fn fullname(&self) -> String {
