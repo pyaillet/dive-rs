@@ -45,12 +45,13 @@ pub struct Node {
     pub full_path: String,
     pub node_type: NodeSpec,
 }
+
 pub struct Layer {
     pub file_tree: Node,
 }
 
-impl Layer {
-    pub fn new() -> Layer {
+impl Default for Layer {
+    fn default() -> Layer {
         Layer {
             file_tree: Node {
                 name: "/".to_string(),
@@ -59,7 +60,9 @@ impl Layer {
             },
         }
     }
+}
 
+impl Layer {
     pub fn from_tar_gz(archive_file: &str) -> Layer {
         let tar_gz = fs::File::open(archive_file).expect("Unable to open file");
         let mut archive = Archive::new(GzDecoder::new(tar_gz));
