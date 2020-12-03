@@ -2,16 +2,17 @@ use std::error;
 use std::fmt;
 
 use flate2::read::GzDecoder;
+use std::ffi::OsStr;
 use std::fs;
+use std::path::Path;
 use tar::Archive;
 use tar::EntryType;
 
 #[derive(Debug)]
 pub struct File {}
 
-pub struct Dir {
-    pub nodes: Vec<Node>,
-}
+#[derive(Debug)]
+pub struct Dir {}
 
 #[derive(Debug)]
 pub struct Symlink {
@@ -43,7 +44,32 @@ impl fmt::Debug for NodeSpec {
 pub struct Node {
     pub name: String,
     pub full_path: String,
+    pub children: Option<Vec<Node>>,
     pub node_type: NodeSpec,
+}
+
+impl Node {
+    fn new_file(full_path: String) -> Node {
+        let p = Path::new(&full_path);
+        Node {
+            name: p
+                .file_name()
+                .unwrap_or(OsStr::new("Not found"))
+                .to_string_lossy()
+                .to_owned()
+                .to_string(),
+            full_path,
+            children: None,
+            node_type: NodeSpec::File(File {}),
+        }
+    }
+
+    fn add_node(&mut self, new_node: Node) {
+        match self.children {
+            Some(ref mut x) => x.push(new_node),
+            None => (),
+        }
+    }
 }
 
 pub struct Layer {
@@ -56,7 +82,8 @@ impl Default for Layer {
             file_tree: Node {
                 name: "/".to_string(),
                 full_path: "/".to_string(),
-                node_type: NodeSpec::Dir(Dir { nodes: Vec::new() }),
+                children: Some(Vec::new()),
+                node_type: NodeSpec::Dir(Dir {}),
             },
         }
     }
@@ -78,10 +105,10 @@ impl Layer {
                         Some(n) => n.to_string_lossy().to_string(),
                         None => "Not found".to_string(),
                     },
-                    full_path: path.to_str().unwrap().to_string(),
+                    full_path: format!("/{}", path.to_owned().to_string_lossy()),
                     node_type: match header.entry_type() {
                         EntryType::Regular => NodeSpec::File(File {}),
-                        EntryType::Directory => NodeSpec::Dir(Dir { nodes: Vec::new() }),
+                        EntryType::Directory => NodeSpec::Dir(Dir {}),
                         EntryType::Symlink => NodeSpec::Symlink(Symlink {
                             target: header
                                 .link_name()?
@@ -93,17 +120,20 @@ impl Layer {
                         }),
                         _ => NodeSpec::Unimplemented(()),
                     },
+                    children: Some(Vec::new()),
                 })
             })
             .filter_map(|r| r.ok())
             .collect::<Vec<Node>>();
-        Layer {
+        let l = Layer {
             file_tree: Node {
                 name: "/".to_string(),
                 full_path: "/".to_string(),
-                node_type: NodeSpec::Dir(Dir { nodes }),
+                node_type: NodeSpec::Dir(Dir {}),
+                children: Some(nodes),
             },
-        }
+        };
+        l
     }
 }
 
@@ -114,13 +144,22 @@ mod tests {
     #[test]
     fn test_from_tar_gz() -> Result<(), Box<dyn error::Error>> {
         let layer = Layer::from_tar_gz("tests/resources/tests_local_layer_tar_gzip");
-        if let NodeSpec::Dir(root) = layer.file_tree.node_type {
-            let node_count = root.nodes.len();
-            for n in root.nodes {
-                dbg!(n);
-            }
-            assert_eq!(node_count, 495);
+        let nodes = &layer.file_tree.children.unwrap();
+        for n in nodes {
+            dbg!(n);
         }
+        assert_eq!(nodes.len(), 495);
+        Ok(())
+    }
+
+    #[test]
+    fn test_add_node() -> Result<(), Box<dyn error::Error>> {
+        let mut layer: Layer = Default::default();
+        let n = Node::new_file("app".to_string());
+        layer.file_tree.add_node(n);
+        let c = &layer.file_tree.children.unwrap();
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].name, "app".to_string());
         Ok(())
     }
 }
