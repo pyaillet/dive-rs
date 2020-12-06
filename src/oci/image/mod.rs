@@ -68,7 +68,7 @@ impl Reference for ImageReference {
             Some(x) => x,
             None => 443,
         };
-        format!("{}:{}", host, port).to_string()
+        format!("{}:{}", host, port)
     }
 
     fn fullname(&self) -> String {
