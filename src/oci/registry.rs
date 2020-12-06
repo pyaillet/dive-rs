@@ -51,10 +51,7 @@ fn blob_url(im: &ImageReference, digest: String) -> String {
     )
 }
 
-pub fn get_manifest(
-    im: &ImageReference,
-    token: &String,
-) -> Result<Manifest, Box<dyn error::Error>> {
+pub fn get_manifest(im: &ImageReference, token: &str) -> Result<Manifest, Box<dyn error::Error>> {
     let url = &manifest_url(im);
     let client = reqwest::blocking::Client::new();
     let req = client
@@ -89,7 +86,7 @@ pub fn get_manifest(
     Ok(m)
 }
 
-pub fn get_config(im: &ImageReference, token: &String) -> Result<Config, Box<dyn error::Error>> {
+pub fn get_config(im: &ImageReference, token: &str) -> Result<Config, Box<dyn error::Error>> {
     let m = get_manifest(im, token)?;
     let url = &blob_url(im, (&m.config.digest).to_string());
     let client = reqwest::blocking::Client::new();
