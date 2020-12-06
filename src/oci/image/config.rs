@@ -159,10 +159,27 @@ mod tests {
         let c: Config = serde_json::from_str(c)?;
         assert_eq!(c.config.user, Some("alice".to_string()));
         assert_eq!(c.config.working_dir, Some("/home/alice".to_string()));
+        assert_eq!(c.config.labels.unwrap().len(), 2);
+        assert_eq!(c.history.len(), 2);
+        assert_eq!(c.rootfs.diff_ids.len(), 2);
         assert_eq!(
             c.config.entrypoint,
             Some(vec!["/bin/my-app-binary".to_string()])
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_display_architecture() -> Result<(), Box<dyn error::Error>> {
+        assert_eq!("Amd64", format!("{}", Architecture::Amd64));
+        assert_eq!("Aarch64", format!("{}", Architecture::Aarch64));
+        Ok(())
+    }
+
+    #[test]
+    fn test_display_os() -> Result<(), Box<dyn error::Error>> {
+        assert_eq!("Linux", format!("{}", OS::Linux));
+        assert_eq!("Windows", format!("{}", OS::Windows));
         Ok(())
     }
 }
