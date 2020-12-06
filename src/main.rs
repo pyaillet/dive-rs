@@ -21,7 +21,7 @@ struct App {
     config: Option<oci::image::config::Config>,
 }
 
-fn config_to_vec<'a>(config: &'a Option<oci::image::config::Config>) -> Vec<ListItem> {
+fn config_to_vec(config: &Option<oci::image::config::Config>) -> Vec<ListItem> {
     match config {
         None => Vec::new(),
         Some(c) => {
@@ -44,9 +44,7 @@ fn config_to_vec<'a>(config: &'a Option<oci::image::config::Config>) -> Vec<List
     }
 }
 
-fn manifest_to_vec<'manifest>(
-    manifest: &'manifest Option<oci::image::manifest::Manifest>,
-) -> Vec<ListItem> {
+fn manifest_to_vec(manifest: &Option<oci::image::manifest::Manifest>) -> Vec<ListItem> {
     match manifest {
         None => Vec::new(),
         Some(m) => m
