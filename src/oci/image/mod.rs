@@ -34,8 +34,8 @@ impl FromStr for ImageReference {
         } else if s.starts_with("https://") {
             s.to_string()
         } else {
-            let host_prepended = match s.find("/") {
-                Some(x) => match s[0..x].find(".") {
+            let host_prepended = match s.find('/') {
+                Some(x) => match s[0..x].find('.') {
                     Some(_) => s.to_string(),
                     None => format!("{}/{}", DEFAULT_REGISTRY_HOST, s),
                 },
@@ -73,7 +73,7 @@ impl Reference for ImageReference {
 
     fn name(&self) -> String {
         let fullname = self.fullname();
-        match fullname.find(":") {
+        match fullname.find(':') {
             Some(x) => fullname[..x].to_string(),
             None => fullname.to_string(),
         }
@@ -81,7 +81,7 @@ impl Reference for ImageReference {
 
     fn tag(&self) -> String {
         let fullname = self.fullname();
-        match fullname.find(":") {
+        match fullname.find(':') {
             Some(x) => fullname[x + 1..].to_string(),
             None => "latest".to_string(),
         }
@@ -93,7 +93,7 @@ impl Reference for ImageReference {
 
     fn digest(&self) -> String {
         let path = self.0.path();
-        match path.find("@") {
+        match path.find('@') {
             Some(x) => path[x..].to_string(),
             None => "".to_string(),
         }
