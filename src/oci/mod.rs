@@ -5,7 +5,7 @@ use std::fmt;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Hash(String);
+pub struct Hash(pub String);
 
 impl fmt::Display for Hash {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
