@@ -2,13 +2,14 @@ pub mod image;
 pub mod registry;
 
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Hash(String);
 
-impl ToString for Hash {
-    fn to_string(&self) -> String {
-        self.0.to_string()
+impl fmt::Display for Hash {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }

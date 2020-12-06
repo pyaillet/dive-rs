@@ -1,30 +1,56 @@
-use serde::{Deserialize, Serialize};
+use serde;
 use serde_json::value::Value;
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt};
 
 use crate::oci::Hash;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum OS {
     Linux,
     Windows,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+impl fmt::Display for OS {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match &self {
+                OS::Linux => "Linux",
+                OS::Windows => "Windows",
+            }
+        )
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum Architecture {
     Amd64,
     Aarch64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+impl fmt::Display for Architecture {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match &self {
+                Architecture::Aarch64 => "Aarch64",
+                Architecture::Amd64 => "Amd64",
+            }
+        )
+    }
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum RootFSType {
     Layers,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct Configuration {
     pub user: Option<String>,
@@ -37,7 +63,7 @@ pub struct Configuration {
     pub labels: Option<HashMap<String, String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct RootFS {
     pub diff_ids: Vec<Hash>,
     #[serde(alias = "type")]
@@ -48,7 +74,7 @@ fn default_as_false() -> bool {
     false
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct History {
     pub created: String,
     pub created_by: String,
@@ -56,7 +82,7 @@ pub struct History {
     pub empty_layer: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
     pub created: String,

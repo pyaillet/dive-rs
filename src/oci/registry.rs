@@ -5,7 +5,35 @@ use crate::oci::image::ImageReference;
 use crate::oci::image::Reference;
 use std::error;
 
-fn manifest_url(im: ImageReference) -> String {
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Token {
+    token: String,
+}
+
+fn token_url(im: &ImageReference) -> String {
+    format!(
+        "https://auth.docker.io/token?service={}&scope=repository:{}:pull",
+        "registry.docker.io",
+        im.name()
+    )
+}
+
+// See https://docs.docker.com/registry/spec/auth/token/
+pub fn get_token(im: &ImageReference) -> Result<String, Box<dyn error::Error>> {
+    let url = &token_url(im);
+
+    let client = reqwest::blocking::Client::new();
+    let res = client.get(url).send()?;
+    let response_body = res.text()?;
+
+    let t: Token = serde_json::from_str(&response_body)?;
+
+    Ok(t.token)
+}
+
+fn manifest_url(im: &ImageReference) -> String {
     format!(
         "{}://{}/v2/{}/manifests/{}",
         im.scheme(),
@@ -15,7 +43,7 @@ fn manifest_url(im: ImageReference) -> String {
     )
 }
 
-fn blob_url(im: ImageReference, digest: String) -> String {
+fn blob_url(im: &ImageReference, digest: String) -> String {
     format!(
         "{}://{}/v2/{}/blobs/{}",
         im.scheme(),
@@ -25,24 +53,51 @@ fn blob_url(im: ImageReference, digest: String) -> String {
     )
 }
 
-pub fn get_manifest(im: ImageReference) -> Result<Manifest, Box<dyn error::Error>> {
+pub fn get_manifest(
+    im: &ImageReference,
+    token: &String,
+) -> Result<Manifest, Box<dyn error::Error>> {
     let url = &manifest_url(im);
     let client = reqwest::blocking::Client::new();
-    let res = client
+    let req = client
         .get(url)
-        .header(reqwest::header::ACCEPT, manifest::MANIFEST_MIME)
-        .send()?;
-    let m: Manifest = serde_json::from_str(&res.text()?)?;
+        .header("Authorization", format!("Bearer {}", token))
+        .header("Accept", manifest::MANIFEST_MIME);
+
+    let res = match req.send() {
+        Ok(r) => Ok(r),
+        Err(e) => {
+            print!("Error sending request");
+            Err(e)
+        }
+    }?;
+
+    let response_body = match res.text() {
+        Ok(r) => Ok(r),
+        Err(e) => {
+            print!("Error getting response");
+            Err(e)
+        }
+    }?;
+
+    let m: Manifest = match serde_json::from_str(&response_body) {
+        Ok(m) => Ok(m),
+        Err(e) => {
+            print!("Error parsing response {:?}", &response_body);
+            Err(e)
+        }
+    }?;
 
     Ok(m)
 }
 
-pub fn get_config(im: ImageReference) -> Result<Config, Box<dyn error::Error>> {
-    let m = get_manifest(im.clone())?;
+pub fn get_config(im: &ImageReference, token: &String) -> Result<Config, Box<dyn error::Error>> {
+    let m = get_manifest(im, token)?;
     let url = &blob_url(im, (&m.config.digest).to_string());
     let client = reqwest::blocking::Client::new();
     let res = client
         .get(url)
+        .header(reqwest::header::AUTHORIZATION, format!("Bearer {}", token))
         .header(reqwest::header::ACCEPT, manifest::CONFIG_MIME)
         .send()?;
     let c: Config = serde_json::from_str(&res.text()?)?;
@@ -61,6 +116,7 @@ mod tests {
 
     #[test]
     fn get_manifest_ok() -> Result<(), Box<dyn error::Error>> {
+        let token = "FakeToken".to_string();
         let server = MockServer::start();
         let mock_manifest = server.mock(|when, then| {
             when.method(GET).path("/v2/test/manifests/local");
@@ -71,7 +127,7 @@ mod tests {
 
         let image_ref: ImageReference = image_url.parse()?;
 
-        let r: Manifest = get_manifest(image_ref)?;
+        let r: Manifest = get_manifest(&image_ref, &token)?;
 
         mock_manifest.assert();
         assert_eq!(r.schema_version, 2);
@@ -81,6 +137,7 @@ mod tests {
 
     #[test]
     fn get_config_ok() -> Result<(), Box<dyn error::Error>> {
+        let token = "FakeToken".to_string();
         let server = MockServer::start();
         let mock_manifest = server.mock(|when, then| {
             when.method(GET).path("/v2/test/manifests/local");
@@ -98,7 +155,7 @@ mod tests {
 
         let image_ref: ImageReference = image_url.parse()?;
 
-        let r: Config = get_config(image_ref)?;
+        let r: Config = get_config(&image_ref, &token)?;
 
         mock_manifest.assert();
         mock_config.assert();
