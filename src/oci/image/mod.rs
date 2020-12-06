@@ -2,8 +2,12 @@ pub mod config;
 pub mod layer;
 pub mod manifest;
 
+use std::fmt;
 use std::str::FromStr;
 use url::{ParseError, Url};
+
+use lazy_static::lazy_static;
+use regex::Regex;
 
 pub trait Reference {
     fn hostport(&self) -> String;
@@ -19,6 +23,8 @@ pub trait Reference {
     fn scheme(&self) -> String;
 }
 
+static DEFAULT_REGISTRY_HOST: &str = "registry-1.docker.io";
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct ImageReference(pub Url);
 
@@ -26,22 +32,29 @@ impl FromStr for ImageReference {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let sanatized = if s.starts_with("http://") {
-            s.to_string()
-        } else if s.starts_with("https://") {
+        lazy_static! {
+            static ref RE: Regex = Regex::new("^https?://").unwrap();
+        }
+        let sanitized = if RE.is_match(s) {
             s.to_string()
         } else {
-            let host_prepended = match s.find("/") {
-                Some(x) => match s[0..x].find(".") {
+            let host_prepended = match s.find('/') {
+                Some(x) => match s[0..x].find('.') {
                     Some(_) => s.to_string(),
-                    None => format!("docker.io/{}", s),
+                    None => format!("{}/{}", DEFAULT_REGISTRY_HOST, s),
                 },
-                None => format!("docker.io/{}", s),
+                None => format!("{}/{}", DEFAULT_REGISTRY_HOST, s),
             };
             format!("https://{}", host_prepended)
         };
-        let parsed = Url::parse(&sanatized)?;
+        let parsed = Url::parse(&sanitized)?;
         Ok(ImageReference(parsed))
+    }
+}
+
+impl fmt::Display for ImageReference {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0.to_string())
     }
 }
 
@@ -49,24 +62,22 @@ impl Reference for ImageReference {
     fn hostport(&self) -> String {
         let host = match self.0.host() {
             Some(x) => x.to_string(),
-            None => "docker.io".to_string(),
+            None => DEFAULT_REGISTRY_HOST.to_string(),
         };
         let port = match self.0.port() {
             Some(x) => x,
             None => 443,
         };
-        format!("{}:{}", host, port).to_string()
+        format!("{}:{}", host, port)
     }
 
     fn fullname(&self) -> String {
-        let fullname = self.0.path()[1..].to_string();
-        dbg!(fullname);
         self.0.path()[1..].to_string()
     }
 
     fn name(&self) -> String {
         let fullname = self.fullname();
-        match fullname.find(":") {
+        match fullname.find(':') {
             Some(x) => fullname[..x].to_string(),
             None => fullname.to_string(),
         }
@@ -74,7 +85,7 @@ impl Reference for ImageReference {
 
     fn tag(&self) -> String {
         let fullname = self.fullname();
-        match fullname.find(":") {
+        match fullname.find(':') {
             Some(x) => fullname[x + 1..].to_string(),
             None => "latest".to_string(),
         }
@@ -86,7 +97,7 @@ impl Reference for ImageReference {
 
     fn digest(&self) -> String {
         let path = self.0.path();
-        match path.find("@") {
+        match path.find('@') {
             Some(x) => path[x..].to_string(),
             None => "".to_string(),
         }
@@ -108,7 +119,7 @@ mod tests {
         );
         assert_eq!(
             "test/test".parse::<ImageReference>().unwrap().hostport(),
-            "docker.io:443".to_string()
+            "registry-1.docker.io:443".to_string()
         );
     }
 
