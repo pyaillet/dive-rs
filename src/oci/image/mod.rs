@@ -6,6 +6,9 @@ use std::fmt;
 use std::str::FromStr;
 use url::{ParseError, Url};
 
+use lazy_static::lazy_static;
+use regex::Regex;
+
 pub trait Reference {
     fn hostport(&self) -> String;
 
@@ -29,9 +32,10 @@ impl FromStr for ImageReference {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let sanitized = if s.starts_with("http://") {
-            s.to_string()
-        } else if s.starts_with("https://") {
+        lazy_static! {
+            static ref RE: Regex = Regex::new("^https?://").unwrap();
+        }
+        let sanitized = if RE.is_match(s) {
             s.to_string()
         } else {
             let host_prepended = match s.find('/') {

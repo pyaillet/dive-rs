@@ -440,6 +440,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "httpmock",
+ "lazy_static",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",
