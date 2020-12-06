@@ -5,9 +5,7 @@ use crate::oci::image::ImageReference;
 use crate::oci::image::Reference;
 use std::error;
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 struct Token {
     token: String,
 }
@@ -167,6 +165,11 @@ mod tests {
 
     #[test]
     fn get_layer_ok() -> Result<(), Box<dyn error::Error>> {
+        Ok(())
+    }
+
+    #[test]
+    fn get_token_ok() -> Result<(), Box<dyn error::Error>> {
         Ok(())
     }
 }

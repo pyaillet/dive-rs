@@ -1,4 +1,3 @@
-use serde;
 use serde_json::value::Value;
 use std::{collections::HashMap, fmt};
 

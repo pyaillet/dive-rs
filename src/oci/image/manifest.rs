@@ -1,34 +1,32 @@
 use std::collections::HashMap as Map;
 
-use serde::{Deserialize, Serialize};
-
 use crate::oci::Hash;
 
 pub const MANIFEST_MIME: &str = "application/vnd.docker.distribution.manifest.v2+json";
 pub const CONFIG_MIME: &str = "application/vnd.docker.container.image.v1+json";
 pub const LAYER_MIME: &str = "application/vnd.docker.image.rootfs.diff.tar.gzip";
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum OS {
     Linux,
     Windows,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum Architecture {
     Amd64,
     Aarch64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Layer {
     pub blob_sum: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Media {
     pub media_type: String,
@@ -36,7 +34,7 @@ pub struct Media {
     pub digest: Hash,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Manifest {
     pub schema_version: u8,
